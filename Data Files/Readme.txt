@@ -1,7 +1,7 @@
 				Torch Hotkey Expanded
 				By C3pa
 
-Version: 1.0.0
+Version: 1.0.1
 
 _________
 Contents
@@ -38,7 +38,8 @@ Changelog
 ____________
 1.0.0
 Initial Release.
-
+1.0.1
+Fixed folder structure.
 ________
 Contact
 ________
