@@ -9,26 +9,31 @@ local log = mwse.Logger.new({
 dofile("Torch Hotkey Expanded.mcm")
 
 ---@param lights { item: tes3light, data: tes3itemData|nil }[]
----@param inventory tes3inventory|tes3itemStack
-local function gatherLights(lights, inventory)
+---@param reference tes3reference
+local function gatherLights(lights, reference)
+	local inventory = reference.object.inventory
+	if CraftingFramework then
+		inventory = CraftingFramework.CarryableContainer.getFullInventory(reference)
+	end
 	--- @param stack tes3itemStack
 	for _, stack in pairs(inventory) do
 		local obj = stack.object
 		if obj.objectType ~= tes3.objectType.light
-			or not obj.canCarry
-			or obj.time <= 0 then
+		or not obj.canCarry
+		or obj.time <= 0 then
 			goto continue
 		end
 		---@cast obj tes3light
-		local variablesCount = 0
+		local itemsWithItemDataCount = 0
 		for _, data in ipairs(stack.variables or {}) do
 			variablesCount = variablesCount + 1
 			if not midnightOil.isCandleRunOut(obj, data) then
 				table.insert(lights, { item = obj, data = data })
 			end
+			itemsWithItemDataCount = itemsWithItemDataCount + 1
 		end
-		local leftCount = stack.count - variablesCount
-		if leftCount <= 0 then
+		local remainingItemsWithoutItemData = stack.count - itemsWithItemDataCount
+		if remainingItemsWithoutItemData <= 0 then
 			goto continue
 		end
 
@@ -42,14 +47,10 @@ end
 local function getBestLight(ref)
 	---@type { item: tes3light, data: tes3itemData|nil }[]
 	local lights = {}
-	if CraftingFramework then
-		gatherLights(lights, CraftingFramework.CarryableContainer.getFullInventory(ref))
-	else
-		gatherLights(lights, ref.object.inventory)
-	end
+	gatherLights(lights, ref)
 
 	if table.empty(lights) then return end
-	-- Now we want the light with biggest radius.
+	-- First, we want the light with the biggest radius.
 	table.sort(lights, function(a, b)
 		if a.item.radius > b.item.radius then
 			return true
