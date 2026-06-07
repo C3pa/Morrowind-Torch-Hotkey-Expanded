@@ -1,5 +1,3 @@
-local midnightOilCommon = include("mer.midnightOil.common")
-
 local config = require("Torch Hotkey Expanded.config")
 local midnightOil = require("Torch Hotkey Expanded.interop.Midnight Oil")
 
