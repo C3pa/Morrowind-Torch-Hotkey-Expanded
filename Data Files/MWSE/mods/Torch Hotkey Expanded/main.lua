@@ -1,6 +1,7 @@
 local midnightOilCommon = include("mer.midnightOil.common")
 
 local config = require("Torch Hotkey Expanded.config")
+local midnightOil = require("Torch Hotkey Expanded.interop.Midnight Oil")
 
 local log = mwse.Logger.new({
 	name = "Torch Hotkey Expanded",
@@ -8,42 +9,22 @@ local log = mwse.Logger.new({
 })
 dofile("Torch Hotkey Expanded.mcm")
 
----@param item tes3light
----@param data tes3itemData
----@return boolean
-local function midnightOilIsCandleRunOut(item, data)
-	return false
-end
-if midnightOilCommon then
-	---@param item tes3light
-	---@param data tes3itemData
-	midnightOilIsCandleRunOut = function(item, data)
-		local isLanternOrCandle = midnightOilCommon.isOilLantern(item) or midnightOilCommon.isCandleLantern(item)
-		if not isLanternOrCandle then
-			return false
-		end
-		local isRunOut = item.time > 0 and data and data.timeLeft < 1
-		return isRunOut
-	end
-end
-
---- @param ref tes3reference
---- @return tes3light?, tes3itemData?
-local function getBestLight(ref)
-	---@type { item: tes3light, data: tes3itemData|nil }[]
-	local lights = {}
+---@param lights { item: tes3light, data: tes3itemData|nil }[]
+---@param inventory tes3inventory|tes3itemStack
+local function iterateInventory(lights, inventory)
 	--- @param stack tes3itemStack
-	for _, stack in pairs(ref.object.inventory) do
+	for _, stack in pairs(inventory) do
 		local obj = stack.object
 		if obj.objectType ~= tes3.objectType.light
-		or not obj.canCarry
-		or obj.time <= 0 then
+			or not obj.canCarry
+			or obj.time <= 0 then
 			goto continue
 		end
+		---@cast obj tes3light
 		local variablesCount = 0
 		for _, data in ipairs(stack.variables or {}) do
 			variablesCount = variablesCount + 1
-			if not midnightOilIsCandleRunOut(obj, data) then
+			if not midnightOil.isCandleRunOut(obj, data) then
 				table.insert(lights, { item = obj, data = data })
 			end
 		end
@@ -159,7 +140,7 @@ local function swapForLight(e)
 		slot = tes3.armorSlot.shield
 	})
 	if shieldStack then
-		lastShield = shieldStack.object
+		lastShield = shieldStack.object --[[@as tes3armor]]
 	end
 
 	local weaponStack = tes3.getEquippedItem({
@@ -181,7 +162,7 @@ local function swapForLight(e)
 	if weaponStack then
 		if weaponStack.object.isTwoHanded or weaponStack.object.isRanged then
 			needsUnequip = true
-			lastWeapon = weaponStack.object
+			lastWeapon = weaponStack.object --[[@as tes3weapon]]
 		end
 	elseif hasFistsOut then
 		needsUnequip = true
