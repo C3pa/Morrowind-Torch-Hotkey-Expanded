@@ -26,7 +26,6 @@ local function gatherLights(lights, reference)
 		---@cast obj tes3light
 		local itemsWithItemDataCount = 0
 		for _, data in ipairs(stack.variables or {}) do
-			variablesCount = variablesCount + 1
 			if not midnightOil.isCandleRunOut(obj, data) then
 				table.insert(lights, { item = obj, data = data })
 			end
