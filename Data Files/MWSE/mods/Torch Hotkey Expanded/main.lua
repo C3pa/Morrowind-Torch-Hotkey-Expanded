@@ -3,6 +3,7 @@ local midnightOilCommon = include("mer.midnightOil.common")
 local config = require("Torch Hotkey Expanded.config")
 local midnightOil = require("Torch Hotkey Expanded.interop.Midnight Oil")
 
+local CraftingFramework = include("CraftingFramework")
 local log = mwse.Logger.new({
 	name = "Torch Hotkey Expanded",
 	level = config.logLevel
@@ -36,6 +37,19 @@ local function gatherLights(lights, inventory)
 		table.insert(lights, { item = obj })
 		:: continue ::
 	end
+end
+
+--- @param ref tes3reference
+--- @return tes3light?, tes3itemData?
+local function getBestLight(ref)
+	---@type { item: tes3light, data: tes3itemData|nil }[]
+	local lights = {}
+	if CraftingFramework then
+		gatherLights(lights, CraftingFramework.CarryableContainer.getFullInventory(ref))
+	else
+		gatherLights(lights, ref.object.inventory)
+	end
+
 	if table.empty(lights) then return end
 	-- Now we want the light with biggest radius.
 	table.sort(lights, function(a, b)
@@ -173,6 +187,24 @@ local function swapForLight(e)
 		tes3.mobilePlayer.weaponReady = false
 	end
 
+	-- Handle removing the light from potentially present Carriable Containers
+	if CraftingFramework then
+		-- We transfer the light if it comes from a carriable container to the main inventory.
+		local remaining = CraftingFramework.CarryableContainer.removeItem({
+			item = light,
+			itemData = data,
+			updateGUI = false,
+			reference = tes3.player
+		})
+		local potentiallyWasInCarraibleContainer = remaining == 0
+		if potentiallyWasInCarraibleContainer then
+			tes3.addItem({
+				item = light,
+				itemData = data,
+				reference = tes3.player
+			})
+		end
+	end
 	-- Equip the light we found.
 	tes3.mobilePlayer:equip({
 		item = light,
