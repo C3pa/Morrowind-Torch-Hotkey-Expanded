@@ -11,7 +11,7 @@ dofile("Torch Hotkey Expanded.mcm")
 
 ---@param lights { item: tes3light, data: tes3itemData|nil }[]
 ---@param inventory tes3inventory|tes3itemStack
-local function iterateInventory(lights, inventory)
+local function gatherLights(lights, inventory)
 	--- @param stack tes3itemStack
 	for _, stack in pairs(inventory) do
 		local obj = stack.object
